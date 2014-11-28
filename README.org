@@ -1,0 +1,36 @@
+* What is heron?
+Heron forecasts next event.
+
+* Required packages
+1) R (include Rscript)
+
+* Setup
+1) Execute following in console
+   #+BEGIN_SRC
+   $ R
+   #+END_SRC
+2) Execute following in R console
+   #+BEGIN_SRC
+   > install.packages(RSQLite)
+   > q()
+   #+END_SRC
+3) Prepare DB in ./db
+
+   This DB assumes models of EnCal.
+   Model has minimum attributes following.
+   #+BEGIN_SRC
+   Recurrence
+     id: integer
+     name: string
+   Event
+     recurrence_id: integer
+     name: string
+     start_time: datetime
+     end_time: datetime
+   #+END_SRC
+4) Set ./settings
+
+* Usage
+#+BEGIN_SRC
+$ ./bin/forecast recurrence-name
+#+END_SRC
