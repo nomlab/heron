@@ -1,0 +1,35 @@
+#!/usr/bin/env RScript --slave
+THIS_FILE_PATH <- function() {
+   args <- commandArgs()
+   filearg <- grep("^--file=", args, value=TRUE)
+   if (length(filearg))
+     sub("^--file=", "", filearg)
+   else
+     invisible(NULL)
+} 
+setwd(normalizePath(paste0(THIS_FILE_PATH(), '/../..')))
+source('./lib/forecaster.R')
+source('./lib/db_manager.R')
+source('./settings')
+
+## Argument
+args <- commandArgs(trailingOnly = T)
+if(length(args) != 1){
+  write('Error: commandline arguments for <recurrence-name> are required', stderr())
+  q()
+}
+
+## Get events in DB
+name <- args[1]
+conn <- dbConnect(db)
+events <- dbGetEvents(conn, name)
+if(nrow(events) == 0){
+  write(paste0('Error: \"', name, '\" does not exist in DB'), stderr())
+  q()
+}
+dbDisconnect(conn)
+
+## Forecast next event
+forecasted <- forecast(mode, range.recurrence, range.candidates, events)
+
+cat(format(forecasted, '%Y-%m-%d'))

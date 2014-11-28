@@ -1,0 +1,4 @@
+db = './db/xxxx.sqlite3'
+mode = 'weekly'
+range.candidates = -3:3
+range.recurrence = as.Date(c('2011-04-01', '2014-03-31'))
