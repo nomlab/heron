@@ -1,0 +1,114 @@
+#!/usr/bin/env RScript --slave --vanilla
+library(docopt)
+library(stringr)
+
+"
+Heron: a smart event forecaster
+
+Usage:
+  heron forecast [options]
+  heron statistical
+
+Options:
+  -h --help                   Show this screen.
+  --input <file>              Input whether file or DB or stdin. [default: -]
+  --method <method>           Select method. [default: date_only]
+  --rname <rname>             Recurrence name on DB. Required --input=hoge.db
+  --sampling-range <from-to>  From and to dates. Format must be YYYY/MM/DD-YYYY/MM/DD.
+  --candidate-range <num>     Parameter for debug. [default: 7]
+" -> doc
+
+#  
+
+THIS_FILE_PATH <- function() {
+    args <- commandArgs()
+    filearg <- grep("^--file=", args, value=TRUE)
+    if (length(filearg))
+        sub("^--file=", "", filearg)
+    else
+        invisible(NULL)
+}
+setwd(normalizePath(paste0(THIS_FILE_PATH(), '/../..')))
+
+source('./lib/forecaster.R')
+source('./lib/db_manager.R')
+source('./lib/date.R')
+source('./settings')
+
+is.dbname <- function(name) return(str_detect(name, ".sqlite|.db"))
+
+#---------------------------------------------------------------
+
+args <- docopt(doc)
+
+################################################################
+## Command: forecast
+################################################################
+if(args$forecast){
+
+    ################################################################
+    ## Option: --input, --rname
+    ################################################################
+    if(args$input == '-'){
+        events <- read.table('stdin', header=F, strip.white=T, as.is=T)[ ,1]
+    }else if(is.dbname(args$input)){
+        if(is.null(args$rname)) stop('When --input=hoge.db is used, --rname is required.')
+
+        db <- args$input
+        name <- args$rname
+        conn <- dbConnect(db)
+        events <- dbGetEvents(conn, name)
+        if(nrow(events) == 0) stop(paste0('\"', name, '\" does not exist in DB.'))
+        dbDisconnect(conn)
+
+        events <- events[ , 'date']
+    }else{
+        filename <- args$input
+        events <- read.table(filename, header=F, strip.white=T, as.is=T)[ ,1]
+    }
+    
+    ################################################################
+    ## Option: --sampling-range
+    ################################################################
+    events <- sort(as.Date(events))
+    if(is.null(args$`sampling-range`)){
+        events.first <- FiscalYearFirstDate(head(events, n=1))
+        events.last <- tail(events, n=1)
+        range.recurrence <- c(events.first, events.last)
+    }else{
+        range.recurrence <- as.Date(str_split(args$`sampling-range`, '-')[[1]])
+    }
+
+    ################################################################
+    ## Option: --method
+    ################################################################
+    if(any(args$method == c('date_only', 'all'))){
+        # mode <- args$method
+    }else{
+        stop(paste0('No method \"', args$method, '\".'))
+    }
+    
+    ################################################################
+    ## Option: --candidate-range
+    ################################################################
+    num <- as.integer(args$`candidate-range`)
+    if(!is.na(num) && (num > 0) && (num %% 2 == 1)){
+        n <- (num-1)/2
+        range.candidates <- -n:n
+    }else{
+        stop(paste0('Bad candidate-range \"', args$`candidate-range`, '\".'))
+    }
+
+    ## Forecast
+    forecasted <- forecast(mode, range.recurrence, range.candidates, events)
+    cat(format(forecasted, '%Y-%m-%d'))
+
+################################################################
+## Command: statistical
+################################################################
+}else if(args$statistical){
+    
+    cat('Sorry, this command is not implemented.\n')
+
+}
+
