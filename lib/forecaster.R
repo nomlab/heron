@@ -299,7 +299,7 @@ forecast <- function(mode, range.recurrence, range.candidates, events){
     # Recurrence: 繰返作業履歴
     first <- range.recurrence[1]
     last  <- range.recurrence[2]
-    recurrence <- as.Date(events[ ,2])
+    recurrence <- as.Date(events)
     recurrence <- recurrence[first <= recurrence & recurrence <= last]
     recurrence.plist <- getParamsList(recurrence, mode)
 

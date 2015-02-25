@@ -24,10 +24,11 @@ if(length(args) != 1){
 name <- args[1]
 conn <- dbConnect(db)
 events <- dbGetEvents(conn, name)
-if(nrow(events) == 0){
+if(length(events) == 0){
   write(paste0('Error: \"', name, '\" does not exist in DB'), stderr())
   q()
 }
+events <- events[ ,2]
 dbDisconnect(conn)
 
 ## Forecast next event
