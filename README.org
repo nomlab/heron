@@ -34,3 +34,8 @@ Heron forecasts next event.
 #+BEGIN_SRC
 $ ./bin/forecast recurrence-name
 #+END_SRC
+
+Example
+#+BEGIN_SRC
+$ ./bin/forecast GN検討打合せ
+#+END_SRC
