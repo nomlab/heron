@@ -59,8 +59,8 @@
   2) Install SQLite
   3) In R prompt, add some packages:
      #+BEGIN_SRC R
-       install.packages(RSQLite)
-       install.packages(optparse)
+       install.packages("RSQLite")
+       install.packages("optparse")
      #+END_SRC
 
 * DB schema
