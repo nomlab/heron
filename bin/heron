@@ -26,6 +26,7 @@ THIS_FILE_PATH <- function() {
     else
         invisible(NULL)
 }
+EXEC_PATH <- getwd()
 setwd(normalizePath(paste0(THIS_FILE_PATH(), '/../..')))
 
 source('./lib/forecaster.R')
@@ -34,7 +35,10 @@ source('./lib/date.R')
 source('./settings')
 
 is.dbname <- function(name) return(str_detect(name, ".sqlite|.db"))
-
+RelativePath <- function(base, path){
+    if(str_detect(path, '~')) return(normalizePath(path))
+    else return(paste0(base, '/', path))
+}
 #---------------------------------------------------------------
 
 args <- docopt(doc)
@@ -52,7 +56,7 @@ if(args$forecast){
     }else if(is.dbname(args$input)){
         if(is.null(args$rname)) stop('When --input=hoge.db is used, --rname is required.')
 
-        db <- args$input
+        db <- RelativePath(EXEC_PATH, args$input)
         name <- args$rname
         conn <- dbConnect(db)
         events <- dbGetEvents(conn, name)
@@ -61,7 +65,7 @@ if(args$forecast){
 
         events <- events[ , 'date']
     }else{
-        filename <- args$input
+        filename <- RelativePath(EXEC_PATH, args$input)
         events <- read.table(filename, header=F, strip.white=T, as.is=T)[ ,1]
     }
 
