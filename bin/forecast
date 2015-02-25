@@ -1,4 +1,5 @@
-#!/usr/bin/env RScript --slave
+#!/usr/bin/env Rscript --slave
+
 THIS_FILE_PATH <- function() {
    args <- commandArgs()
    filearg <- grep("^--file=", args, value=TRUE)
