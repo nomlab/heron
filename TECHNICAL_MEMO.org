@@ -1,0 +1,58 @@
+* Heron Manual
+** 概要
+
+** 構成
+#+BEGIN_SRC
+.
+├── MANUAL.org
+├── README.org
+├── bin
+│    └── forecast
+├── db
+│    ├── holidays.csv
+│    └── lastnote.sqlite3
+├── lib
+│    ├── acf.R
+│    ├── db_manager.R
+│    └── forecaster.R
+└── settings
+#+END_SRC
+
+** 機能
+*** 予測
+***** Command
+#+BEGIN_SRC
+$ heron forecast < "2014/01/07, ..."
+#+END_SRC
+
+***** Options
++ --method
+  予測のアルゴリズムの選択
+  default: date_only
+
+  date_only
+  all
+
++ --input="db_path" or "text_path"
+  入力
+  default: -
+
+  db_path  : DBのパス
+  text_path: テキストファイルのパス
+  -        : 標準入力
+
++ --rname="recurrence_name"
+  required: --method=db_path
+
++ --candidate-range=num
+  予測候補の範囲
+  default: 7
+
++ --sampling-range=date-date
+  予測に使用するリカーレンスのサンプリング範囲
+  default: リカーレンスの1番目の日付の年度から今日まで
+
+*** 統計情報の閲覧(Web)
+
+** メモ
+CLIにしてオプションを分けるならoptparseパッケージを使うとよいかも？
