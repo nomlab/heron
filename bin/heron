@@ -103,7 +103,7 @@ if(args$forecast){
 
     ## Forecast
     forecasted <- forecast(mode, range.recurrence, range.candidates, events)
-    cat(format(forecasted, '%Y-%m-%d'))
+    DatePrettyPrint(forecasted)
 
 ################################################################
 ## Command: statistical

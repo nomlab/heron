@@ -4,3 +4,7 @@ FiscalYearFirstDate <- function(date){
     if(any(m == c(1,2,3))) y <- y - 1
     return(as.Date(paste0(y, "-4-1")))
 }
+
+DatePrettyPrint <- function(date){
+    return(cat(format(forecasted, '%Y-%m-%d\n')))
+}
