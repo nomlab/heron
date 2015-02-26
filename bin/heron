@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript --slave --vanilla
-library(docopt)
-library(stringr)
+library(docopt, quietly=T)
+library(stringr, quietly=T)
 
 "
 Heron: a smart event forecaster
