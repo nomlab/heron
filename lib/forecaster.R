@@ -118,7 +118,7 @@ genLM <- function(cdv){
     return(m)
 }
 
-getLMAll <- function(plist, first, last){
+getLMAll <- function(plist, first, last, mode){
     dates <- seq(from=first, to=last, by='day')
     plist.alldate <- getParamsList(dates, mode)
     cols <- colnames(plist.alldate)
@@ -294,7 +294,7 @@ getF <- function(candidates.plist, LM, W, mode, annuLM, candidates.date){
 }
 
 # 本体
-forecast <- function(mode, range.recurrence, range.candidates, events){
+forecast <- function(range.recurrence, range.candidates, events, mode='weekly'){
 
     # Recurrence: 繰返作業履歴
     first <- range.recurrence[1]
@@ -313,7 +313,7 @@ forecast <- function(mode, range.recurrence, range.candidates, events){
 
     # ts = LM * W からWを求めた後
     #  F =  X * W からFを求める
-    LM <- getLMAll(recurrence.plist, first, last)
+    LM <- getLMAll(recurrence.plist, first, last, mode)
 
     ## FIXME 今回はここにannualを無理矢理いれるが，あとで構造を見直すこと．business-tripも同じ問題にあたる
     annuLM <- annualLM(recurrence, first, last)

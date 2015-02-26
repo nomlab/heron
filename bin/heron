@@ -32,7 +32,6 @@ setwd(normalizePath(paste0(THIS_FILE_PATH(), '/../..')))
 source('./lib/forecaster.R')
 source('./lib/db_manager.R')
 source('./lib/date.R')
-source('./settings')
 
 is.dbname <- function(name) return(str_detect(name, "\\.sqlite|\\.db"))
 RelativePath <- function(base, path){
@@ -102,7 +101,7 @@ if(args$forecast){
     }
 
     ## Forecast
-    forecasted <- forecast(mode, range.recurrence, range.candidates, events)
+    forecasted <- forecast(range.recurrence, range.candidates, events)
     DatePrettyPrint(forecasted)
 
 ################################################################
