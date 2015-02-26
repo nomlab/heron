@@ -60,7 +60,8 @@
   3) In R prompt, add some packages:
      #+BEGIN_SRC R
        install.packages("RSQLite")
-       install.packages("optparse")
+       install.packages("docopt")
+       install.packages("stringr")
      #+END_SRC
 
 * DB schema
