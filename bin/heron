@@ -7,7 +7,7 @@ Heron: a smart event forecaster
 
 Usage:
   heron forecast [options]
-  heron statistical
+  heron visualize [--input <file>]
 
 Options:
   -h --help                   Show this screen.
@@ -105,10 +105,31 @@ if(args$forecast){
     DatePrettyPrint(forecasted)
 
 ################################################################
-## Command: statistical
+## Command: visualize
 ################################################################
-}else if(args$statistical){
+}else if(args$visualize){
 
-    cat('Sorry, this command is not implemented.\n')
+    ################################################################
+    ## Option: --input
+    ################################################################
+    if(args$input == '-'){
+        events <- read.csv('stdin', header=F, strip.white=T, as.is=T)
+        colnames(events) <- c('name', 'date')
+        shiny.events.list <- list(events)
+        names(shiny.events.list) <- 'STDIN'
+    }else if(is.dbname(args$input)){
+        db <- RelativePath(EXEC_PATH, args$input)
+        conn <- dbConnect(db)
+        shiny.events.list <- dbGetRecurrences(conn)
+        dbDisconnect(conn)
+    }else{
+        filename <- RelativePath(EXEC_PATH, args$input)
+        events <- read.csv(filename, header=F, strip.white=T, as.is=T)
+        colnames(events) <- c('name', 'date')
+        shiny.events.list <- list(events)
+        names(shiny.events.list) <- args$input
+    }
+
+    shiny::runApp('./lib/visualizeEvent/')
 
 }

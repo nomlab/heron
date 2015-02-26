@@ -8,3 +8,11 @@ FiscalYearFirstDate <- function(date){
 DatePrettyPrint <- function(date){
     return(cat(format(forecasted, '%Y-%m-%d\n')))
 }
+
+monthweek <- function(date){
+    return(paste0(format(date, '%b'), floor((as.integer(format(date, '%d')) - 1) / 7) + 1, 'w'))
+}
+
+monthweeks <- function(dates){
+    return(sapply(dates, monthweek))
+}

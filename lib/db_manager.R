@@ -42,3 +42,25 @@ dbGetEvents <- function(conn, recurrence){
 
     return(result)
 }
+
+dbGetRecurrences <- function(conn){
+    query <- paste0('SELECT id FROM recurrences')
+    recurrence_ids <- RSQLite::dbGetQuery(conn, query)[ ,'id']
+    result <- list()
+    if(length(recurrence_ids) == 0) return(result)
+    recurrence_names <- c()
+    for(recurrence_id in recurrence_ids){
+        query <- paste0('SELECT name FROM recurrences WHERE id = ', recurrence_id)
+        recurrence_names <- c(recurrence_names, RSQLite::dbGetQuery(conn, query)[ ,'name'])
+
+        query <- paste0('SELECT * FROM events WHERE recurrence_id == "', recurrence_id, '"')
+        events <- RSQLite::dbGetQuery(conn, query)
+        events.ord <- events[order(events$start_time), ]
+
+        names <- events.ord$name
+        dates <- as.Date(events.ord$start_time)
+        result <- c(result, list(data.frame(name=names, date=dates)))
+    }
+    names(result) <- recurrence_names
+    return(result)
+}
