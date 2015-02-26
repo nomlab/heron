@@ -34,7 +34,7 @@ source('./lib/db_manager.R')
 source('./lib/date.R')
 source('./settings')
 
-is.dbname <- function(name) return(str_detect(name, ".sqlite|.db"))
+is.dbname <- function(name) return(str_detect(name, "\\.sqlite|\\.db"))
 RelativePath <- function(base, path){
     if(str_detect(path, '~')) return(normalizePath(path))
     else return(paste0(base, '/', path))
