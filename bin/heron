@@ -1,4 +1,4 @@
-#!/usr/bin/env RScript --slave --vanilla
+#!/usr/bin/env Rscript --slave --vanilla
 library(docopt)
 library(stringr)
 
