@@ -62,7 +62,10 @@
      #+BEGIN_SRC R
        install.packages("RSQLite")
        install.packages("docopt")
+       install.packages("shiny")
        install.packages("stringr")
+       install.packages("ggplot2")
+       install.packages("scales")
      #+END_SRC
 
 * DB schema
