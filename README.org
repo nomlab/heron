@@ -60,13 +60,9 @@
   2) Install SQLite
   3) In R prompt, add some packages:
      #+BEGIN_SRC R
-       install.packages("RSQLite")
-       install.packages("docopt")
-       install.packages("shiny")
-       install.packages("stringr")
-       install.packages("ggplot2")
-       install.packages("scales")
-     #+END_SRC
+       pkgs <- c("RSQLite", "docopt", "shiny", "stringr", "ggplot2", "scales")
+       install.packages(pkgs)
+      #+END_SRC
 
 * DB schema
 
