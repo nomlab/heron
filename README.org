@@ -27,13 +27,14 @@
 
   #+BEGIN_SRC shell-script
   $ heron forecast <<EOF
+  2013-01-14
   2014-01-13
   2015-01-12
   EOF
   2016-01-11
   #+END_SRC
 
-  Heron takes the occurrence list of 2014-01-13 (Mon) and 2015-01-12 (Mon),
+  Heron takes the occurrence list of 2013-01-14 (Mon) ... 2015-01-12 (Mon),
   as a training data, and guesses the rule ``it happens second Monday on every January.''
 
   The list is longer, the forecast will be better.
@@ -48,7 +49,7 @@
               FILE should be in the form of:
               + A plain text that each line has YYYY-MM-DD string; or
               + SQLite DB FILE (see below in details).
-  + FROM-TO :: Date range in the form of YYYYMMDD-YYYYMMDD.
+  + FROM-TO :: Date range in the form of YYYY/MM/DD-YYYY/MM/DD.
                Heron noticed that the training occurrences in the list were sampled from this range.
                Since the training occurrence list does not teach NOT-OCCURRED dates, this range teaches
                heron the NOT-OCCURRED dates before the first occurrence date and after the last occurrence date.
@@ -92,6 +93,6 @@
   |  3 | 2015 meeting |             2 | 2015-01-01 | 2015-01-01 |
 
   #+BEGIN_SRC shell-script
-  $ heron forecast --recurrence-name='Monthly meeting' --input=calendar.sqlite
+  $ heron forecast --rname='Monthly meeting' --input=calendar.sqlite
   2014-03-10
   #+END_SRC
