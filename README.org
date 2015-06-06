@@ -21,10 +21,11 @@
 # #+LaTeX: \thispagestyle{empty}
 
 * What is heron?
-  Heron forecasts your upcoming events.
+  Heron forecasts your upcoming events or visualizes your event records.
 
 * Simple Usage
 
+  Forecast the next event:
   #+BEGIN_SRC shell-script
   $ heron forecast <<EOF
   2013-01-14
@@ -32,6 +33,30 @@
   2015-01-12
   EOF
   2016-01-11
+  #+END_SRC
+
+  Visualize the event records:
+  #+BEGIN_SRC shell-script
+    # 散髪 means ``hear cut''
+    $ heron visualize <<EOF
+    散髪,2013/10/13
+    散髪,2013/12/01
+    散髪,2014/01/11
+    散髪,2014/02/23
+    散髪,2014/04/06
+    散髪,2014/05/13
+    散髪,2014/06/22
+    散髪,2014/08/11
+    散髪,2014/09/21
+    散髪,2014/10/19
+    散髪,2014/12/06
+    散髪,2015/01/20
+    散髪,2015/03/04
+    散髪,2015/04/18
+    散髪,2015/05/31
+    EOF
+    Listening on http://127.0.0.1:3090
+    # open http://127.0.0.1:3090 in your browser
   #+END_SRC
 
   Heron takes the occurrence list of 2013-01-14 (Mon) ... 2015-01-12 (Mon),
@@ -42,8 +67,12 @@
 * Usage
   #+BEGIN_SRC shell-script
   heron forecast [--method=METHOD] [--input=FILE] [--sampling-range=FROM-TO]
+  heron visualize [--input=FILE]
   #+END_SRC
 
+  + COMMANDS ::
+    + visualize :: Visualize your event record in your web browser.
+    + forecast  :: Forecast the next event occurrence from your event record.
   + METHOD :: Set the forecasting algorithm. Possible values are: =date_only=, =all= (default: date_only).
   + FILE   :: Get training occurrence list from the =FILE=.
               FILE should be in the form of:
