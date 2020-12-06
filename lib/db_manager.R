@@ -18,9 +18,9 @@ dbDisconnect <- function(conn){
 #--------------------------------------------------------
 # return     : dates of recurrence
 dbGetEventDates <- function(conn, recurrence){
-    query <- paste0('SELECT id FROM recurrences WHERE name == "', recurrence, '"')
+    query <- paste0('SELECT id FROM recurrence WHERE name == "', recurrence, '"')
     recurrence_id <- RSQLite::dbGetQuery(conn, query)
-    query <- paste0('SELECT * FROM events WHERE recurrence_id == "', recurrence_id, '"')
+    query <- paste0('SELECT * FROM event WHERE recurrence_id == "', recurrence_id, '"')
     events <- RSQLite::dbGetQuery(conn, query)
     datetimes <- sort(events$start_time)
     dates <- as.Date(datetimes)
@@ -29,14 +29,14 @@ dbGetEventDates <- function(conn, recurrence){
 }
 
 dbGetEvents <- function(conn, recurrence){
-    query <- paste0('SELECT id FROM recurrences WHERE name == "', recurrence, '"')
+    query <- paste0('SELECT id FROM recurrence WHERE name == "', recurrence, '"')
     recurrence_id <- RSQLite::dbGetQuery(conn, query)
     if(nrow(recurrence_id) == 0) return(data.frame())
-    query <- paste0('SELECT * FROM events WHERE recurrence_id == "', recurrence_id, '"')
+    query <- paste0('SELECT * FROM event WHERE recurrence_id == "', recurrence_id, '"')
     events <- RSQLite::dbGetQuery(conn, query)
     events.ord <- events[order(events$start_time), ]
 
-    names <- events.ord$name
+    names <- events.ord$summary
     dates <- as.Date(events.ord$start_time)
     result <- data.frame(name=names, date=dates)
 
@@ -44,16 +44,16 @@ dbGetEvents <- function(conn, recurrence){
 }
 
 dbGetRecurrences <- function(conn){
-    query <- paste0('SELECT id FROM recurrences')
+    query <- paste0('SELECT id FROM recurrence')
     recurrence_ids <- RSQLite::dbGetQuery(conn, query)[ ,'id']
     result <- list()
     if(length(recurrence_ids) == 0) return(result)
     recurrence_names <- c()
     for(recurrence_id in recurrence_ids){
-        query <- paste0('SELECT name FROM recurrences WHERE id = ', recurrence_id)
+        query <- paste0('SELECT name FROM recurrence WHERE id = ', recurrence_id)
         recurrence_names <- c(recurrence_names, RSQLite::dbGetQuery(conn, query)[ ,'name'])
 
-        query <- paste0('SELECT * FROM events WHERE recurrence_id == "', recurrence_id, '"')
+        query <- paste0('SELECT * FROM event WHERE recurrence_id == "', recurrence_id, '"')
         events <- RSQLite::dbGetQuery(conn, query)
         events.ord <- events[order(events$start_time), ]
 

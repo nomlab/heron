@@ -16,6 +16,7 @@ Options:
   --rname <rname>             Recurrence name on DB. Required --input=hoge.db
   --sampling-range <from-to>  From and to dates. Format must be YYYY/MM/DD-YYYY/MM/DD.
   --candidate-range <num>     Parameter for debug. [default: 7]
+  --forecast_year <year>      Format must be YYYY.
 " -> doc
 
 THIS_FILE_PATH <- function() {
@@ -27,7 +28,7 @@ THIS_FILE_PATH <- function() {
         invisible(NULL)
 }
 EXEC_PATH <- getwd()
-setwd(normalizePath(paste0(THIS_FILE_PATH(), '/../..')))
+# setwd(normalizePath(paste0(THIS_FILE_PATH(), '/../..')))
 
 source('./lib/forecaster.R')
 source('./lib/db_manager.R')
@@ -92,7 +93,7 @@ if(args$forecast){
     ################################################################
     ## Option: --candidate-range
     ################################################################
-    num <- as.integer(args$`candidate-range`)
+    num <- as.integer(args$candidate_range)
     if(!is.na(num) && (num > 0) && (num %% 2 == 1)){
         n <- (num-1)/2
         range.candidates <- -n:n
@@ -100,19 +101,35 @@ if(args$forecast){
         stop(paste0('Bad candidate-range \"', args$`candidate-range`, '\".'))
     }
 
-    ## Forecast
-    forecasted <- forecast(range.recurrence, range.candidates, events)
-    DatePrettyPrint(forecasted)
-
+    ################################################################
+    ## Option: --forecast_year
+    ################################################################
+    if(is.null(args$forecast_year)){
+        ## Forecast
+	forecasted <- forecast(range.recurrence, range.candidates, events)
+	DatePrettyPrint(forecasted)
+    } else {
+	## forecast_year = as.Date(paste(args$forecast_year, "-03-31"))
+	forecast_year = as.Date("2021-03-31")
+	## Forecast
+	while (TRUE) {
+	      range.recurrence <- c(head(events, n=1), tail(events, n=1))
+	      forecasted <- forecast(range.recurrence, range.candidates, events)
+	      forecasted <- as.Date(forecasted)
+	      events <- c(events, forecasted)
+	      if (forecasted > forecast_year) break
+	      DatePrettyPrint(forecasted)
+	}
+    }
 ################################################################
 ## Command: visualize
 ################################################################
-}else if(args$visualize){
+}else if(args$visualize) {
 
     ################################################################
     ## Option: --input
     ################################################################
-    if(args$input == '-'){
+    if(args$input == '-') {
         events <- read.csv('stdin', header=F, strip.white=T, as.is=T)
         colnames(events) <- c('name', 'date')
         shiny.events.list <- list(events)
