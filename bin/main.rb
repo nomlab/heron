@@ -38,7 +38,7 @@ when "show_calendars" then
 
 # Usage: bundle exec ruby main.rb post_event CALENDAR_ID TITLE START_DATE END_DATE
 when "post_event" then
-  if ARGV.size() == 4
+  if ARGV.size() == 5
     calendar_id = ARGV[1]
     title = ARGV[2]
     start_date = Date.strptime(ARGV[3], '%Y-%m-%d')
@@ -50,7 +50,7 @@ when "post_event" then
   
 # Usage: bundle exec ruby main.rb post_heron CALENDAR_ID TITLE HERON_RESULT
 when "post_heron" then
-  if ARGV.size == 3
+  if ARGV.size == 4
     calendar_id = ARGV[1]
     title = ARGV[2]
     File.open(ARGV[3], mode = "rt"){|f|
