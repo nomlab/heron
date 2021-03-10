@@ -1,9 +1,9 @@
 #[macro_use]
 extern crate polars;
-use anyhow::Result;
 use chrono::prelude::*;
-use chrono::{Date, DateTime, Duration, Local, Utc};
+use chrono::{Date, Duration, Utc};
 use ndarray::prelude::*;
+use ndarray_glm::{standardize, Linear, ModelBuilder};
 use polars::prelude::*;
 
 #[test]
@@ -13,6 +13,7 @@ fn example() -> Result<()> {
     Ok(())
 }
 
+#[test]
 fn print_typename<T>(_: T) {
     println!("{}", std::any::type_name::<T>());
 }
@@ -20,7 +21,7 @@ fn print_typename<T>(_: T) {
 fn fiscal_year_first_date(date: Date<Utc>) -> Date<Utc> {
     let mut y = date.year();
     let m = date.month();
-    if (m == 1 || m == 2 || m == 3) {
+    if m == 1 || m == 2 || m == 3 {
         y = y - 1;
     }
     return Utc.ymd(y, 4, 1);
@@ -31,12 +32,14 @@ fn main() {
         Utc.ymd(2014, 1, 14),
         Utc.ymd(2015, 1, 13),
         Utc.ymd(2016, 1, 12),
+        Utc.ymd(2017, 1, 10),
     ];
     let first = fiscal_year_first_date(events[0]);
-    let last = events.last();
+    let last = events.last().unwrap();
     let range_candidates: Vec<i64> = (-3..4).collect();
-    let range_recurrence = vec![events[0], events[2]];
+    let range_recurrence = vec![first, *last];
     let forecasted = forecast(range_recurrence, range_candidates, events);
+    println!("forecast: {:?}", forecasted);
 }
 
 fn weekdays(date: &Date<Utc>) -> Weekday {
@@ -50,11 +53,11 @@ fn weekdays_considering_nholiday(dates: &Vec<Date<Utc>>) -> Vec<String> {
         .collect()
 }
 
-fn monthweek(date: &Date<Utc>) -> u32 {
-    (date.day() - 1) / 7 + 1
+fn monthweek(date: &Date<Utc>) -> String {
+    ((date.day() - 1) / 7 + 1).to_string() + "w"
 }
 
-fn monthweeks(dates: &Vec<Date<Utc>>) -> Vec<u32> {
+fn monthweeks(dates: &Vec<Date<Utc>>) -> Vec<String> {
     dates.iter().map(|date| monthweek(&date)).collect()
 }
 
@@ -72,8 +75,6 @@ fn get_params_list(dates: &Vec<Date<Utc>>) -> DataFrame {
 		    "weeks" => &weeks,
 		    "months" => &months)
     .unwrap();
-
-    println!("{}", plist);
 
     plist
 }
@@ -96,7 +97,7 @@ fn dates_to_occurreds(dates: &Vec<Date<Utc>>, range: &Vec<Date<Utc>>) -> Vec<u64
 }
 
 fn get_ac(f: &Vec<u64>, range: &Vec<Date<Utc>>) -> Vec<f64> {
-    let start = 0;
+    // let start = 0;
     let end = (range[1] - range[0]).num_days();
 
     let mut ac: Vec<f64> = vec![0.0; (end + 1) as usize];
@@ -115,8 +116,6 @@ fn get_ac(f: &Vec<u64>, range: &Vec<Date<Utc>>) -> Vec<f64> {
 fn get_big_wave_cycle(dates: &Vec<Date<Utc>>, range: &Vec<Date<Utc>>) -> usize {
     let series = dates_to_occurreds(dates, range);
     let mut ac = get_ac(&series, range);
-
-    println!("{:?}", ac);
 
     // 要修正
     // 長過ぎる周期をカット
@@ -175,39 +174,118 @@ fn get_candidates(events: &Vec<Date<Utc>>, range: &Vec<i64>, period: usize) -> V
     candidates
 }
 
-fn gen_lm(cdv: &Series) -> Array2<u64> {
+fn gen_lm(cdv: &Series) -> Vec<Series> {
     let nrow = cdv.len();
-    let col_uniq = cdv.unique().unwrap();
+    let col_uniq = if cdv.name() == "wday" {
+        Series::new("wdays", &["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"])
+    } else {
+        cdv.unique().unwrap().sort(false)
+    };
     let ncol = col_uniq.len();
-    let mut m: Array2<u64> = Array::zeros((nrow, ncol));
 
-    for row in cdv.utf8().into_iter() {
-        for col in col_uniq.utf8().into_iter() {
-            println!("{:?}", row);
-            println!("{:?}", col);
-            // if row.lt(col).all_true() {
-            //     m[[i, j]] = 1;
-            // }
+    // let mut m: Array2<f32> = Array::zeros((nrow, ncol));
+
+    let mut vec = vec![vec![0.0; nrow]; ncol];
+    // for row in 0..nrow {
+    for row in 0..nrow {
+        for col in 0..ncol {
+            if cdv.get(row) == col_uniq.get(col) {
+                // m[[row, col]] = 1.0;
+                vec[col][row] += 1.0;
+                break;
+            }
         }
     }
 
-    println!("{:?}", m);
-    m
+    let mut param = Vec::new();
+
+    for (i, v) in vec.iter().enumerate() {
+        param.push(Series::new(&col_uniq.get(i).to_string(), v));
+    }
+    // let mut m = DataFrame::new(param).unwrap();
+    param
 }
 
-fn get_lm_all(plist: DataFrame, first: Date<Utc>, last: Date<Utc>) {
+fn get_lm_all(first: Date<Utc>, last: Date<Utc>) -> DataFrame {
     let len = (last - first).num_days();
     let dates: Vec<Date<Utc>> = (0..=len).map(|x| first + Duration::days(x)).collect();
-    let mut plist_alldate = get_params_list(&dates);
+    let plist_alldate = get_params_list(&dates);
+    let cols = plist_alldate.get_columns();
 
-    let lm = gen_lm(plist_alldate.column("wday").unwrap());
+    let mut param = gen_lm(&cols[0]);
+    if cols.len() > 1 {
+        for col in &cols[1..cols.len()] {
+            param.append(&mut gen_lm(&col));
+        }
+    }
+    let lm = DataFrame::new(param).unwrap();
+    lm
 }
 
-fn forecast(range_recurrence: Vec<Date<Utc>>, range_candidate: Vec<i64>, events: Vec<Date<Utc>>) {
+fn get_ts(recurrence: &Vec<Date<Utc>>, first: Date<Utc>, last: Date<Utc>) -> Array1<f32> {
+    let len = (last - first).num_days();
+    let dates: Vec<Date<Utc>> = (0..=len).map(|x| first + Duration::days(x)).collect();
+    let mut ts = Array::zeros(dates.len());
+    for i in 0..dates.len() {
+        for r in recurrence {
+            if &dates[i] == r {
+                ts[i] = 1.0
+            }
+        }
+    }
+    ts
+}
+
+fn get_w(ts: Array1<f32>, df: &DataFrame) -> Array1<f32> {
+    let lm = df.to_ndarray::<Float32Type>().unwrap();
+    let lm = standardize(lm);
+    let model = ModelBuilder::<Linear>::data(ts.view(), lm.view())
+        .build()
+        .unwrap();
+    let fit = model.fit_options().l2_reg(1e-5).fit().unwrap();
+    fit.result
+}
+
+fn get_f(candidates_plist: &DataFrame, lm: DataFrame, w: Array1<f32>) -> Array1<f32> {
+    let colname_lm = lm.get_column_names();
+    let mut m: Array2<f32> = Array::zeros((candidates_plist.height(), colname_lm.len()));
+
+    let cols = candidates_plist.get_columns();
+
+    for col in cols.iter() {
+        for i in 0..m.shape()[0] {
+            for j in 0..colname_lm.len() {
+                if col.get(i).to_string() == colname_lm[j] {
+                    m[[i, j]] = 1.0;
+                }
+            }
+        }
+    }
+
+    let f = m.dot(&w.slice(s![1..])) + w.slice(s![0]);
+
+    f
+}
+
+fn max_index(array: Array1<f32>) -> usize {
+    let mut index: usize = 0;
+    for i in 0..array.len() {
+        if array[index] < array[i] {
+            index = i;
+        }
+    }
+    index
+}
+
+fn forecast(
+    range_recurrence: Vec<Date<Utc>>,
+    range_candidate: Vec<i64>,
+    events: Vec<Date<Utc>>,
+) -> Date<Utc> {
     let first = range_recurrence[0];
     let last = range_recurrence[1];
     let recurrence = events;
-    let recurrence_plist = get_params_list(&recurrence);
+    // let recurrence_plist = get_params_list(&recurrence);
 
     let mut period = get_big_wave_cycle(&recurrence, &range_recurrence);
     if period == 0 {
@@ -217,5 +295,15 @@ fn forecast(range_recurrence: Vec<Date<Utc>>, range_candidate: Vec<i64>, events:
     let candidates = get_candidates(&recurrence, &range_candidate, period);
     let candidates_plist = get_params_list(&candidates);
 
-    let lm = get_lm_all(recurrence_plist, first, last);
+    let lm = get_lm_all(first, last);
+
+    let ts = get_ts(&recurrence, first, last);
+    let w = get_w(ts, &lm);
+
+    let f = get_f(&candidates_plist, lm, w);
+    let index = max_index(f);
+
+    let forecasted = candidates[index];
+
+    forecasted
 }

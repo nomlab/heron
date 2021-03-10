@@ -10,4 +10,5 @@ edition = "2018"
 anyhow = "1.0"
 polars = { version = "0.10", features = ["ndarray", "parallel", "random"]}
 chrono = "*"
-ndarray = "0.12.1"
+ndarray = { version = "0.13.1", features = ["blas"]}
+ndarray-glm = { version = "0.0.7", features = ["openblas-static"] }
