@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# DB 読込み
+db_file=db/events.db
+
+# SQL
+SQL='select * from recurrence;'
+
+echo "$SQL" | sqlite3 -separator , $db_file > out.txt
+
+file=out.txt
+NO=0
+#１行ずつ読み込む
+while read STR
+do
+    # １．カンマはcutコマンドのオプション指定でフィールド区切り文字に指定
+    # ２．フィールドを指定して切り出す
+id[$NO]=`echo $STR | cut -d , -f 1`
+name[$NO]=`echo $STR | cut -d , -f 2`
+let NO++
+done < ${file}
+
+SUM=${#id[*]}
+
+# 予測年度指定
+year=$1
+range_first=$((${year}-3))
+range_end=$((${year}-1))
+
+echo ${year} ${range_first}
+
+for((x=0; x<${SUM}; x++ ))
+do
+    echo "リカーレンス：${name[$x]}"
+    Rscript --vanilla --slave bin/heron forecast --rname=${name[$x]} --input=db/events.db --sampling-range=${range_first}/04/01-${range_end}/03/31 --forecast_year=${year} > result.txt
+    bundle exec ruby bin/main.rb post_heron <CALENDAR_ID> ${name[$x]} result.txt
+done
+exit 0
