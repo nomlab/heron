@@ -256,7 +256,6 @@ getW <- function(ts, LM){
     # res <- glm(ts~., x, family=binomial(link='logit')) # ロジスティック回帰
     # res <- nls(.. # 非線形回帰は可能？
 
-    ## print(summary(res))
     coef <- res$coefficients
     coef[is.na(coef)==TRUE] <- 0
     ## print(coef)
@@ -295,7 +294,6 @@ getF <- function(candidates.plist, LM, W, mode, annuLM, candidates.date){
 
 # 本体
 forecast <- function(range.recurrence, range.candidates, events, mode='weekly'){
-
     # Recurrence: 繰返作業履歴
     first <- range.recurrence[1]
     last  <- range.recurrence[2]

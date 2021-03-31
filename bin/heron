@@ -109,15 +109,17 @@ if(args$forecast){
 	forecasted <- forecast(range.recurrence, range.candidates, events)
 	DatePrettyPrint(forecasted)
     } else {
-	## forecast_year = as.Date(paste(args$forecast_year, "-03-31"))
-	forecast_year = as.Date("2021-03-31")
+        forecast_year = as.integer(args$forecast_year)
+      	forecast_start = as.Date(paste0(forecast_year, "-04-01"))
+	forecast_end = as.Date(paste0(forecast_year+1, "-03-31"))
 	## Forecast
 	while (TRUE) {
 	      range.recurrence <- c(head(events, n=1), tail(events, n=1))
 	      forecasted <- forecast(range.recurrence, range.candidates, events)
 	      forecasted <- as.Date(forecasted)
 	      events <- c(events, forecasted)
-	      if (forecasted > forecast_year) break
+	      if (forecasted < forecast_start) next
+	      if (forecasted > forecast_end) break
 	      DatePrettyPrint(forecasted)
 	}
     }

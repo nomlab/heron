@@ -77,18 +77,20 @@ SQL
                                       order_by: "starttime",
                                       single_events: true)
       response.items.each do |e|
-        if e.start.date
-          db.execute(sql,
-                     e.id,
-                     e.summary,
-                     e.start.date.strftime("%Y-%m-%d"),
-                     e.end.date.strftime("%Y-%m-%d"))
-        else
-          db.execute(sql,
-                     e.id,
-                     e.summary,
-                     e.start.date_time.strftime("%Y-%m-%d"),
-                     e.end.date_time.strftime("%Y-%m-%d"))
+        if db.execute("select * from event where id = '#{e.id}'").empty?
+          if e.start.date
+            db.execute(sql,
+                       e.id,
+                       e.summary,
+                       e.start.date.strftime("%Y-%m-%d"),
+                       e.end.date.strftime("%Y-%m-%d"))
+          else
+            db.execute(sql,
+                       e.id,
+                       e.summary,
+                       e.start.date_time.strftime("%Y-%m-%d"),
+                       e.end.date_time.strftime("%Y-%m-%d"))
+          end
         end
       end
       if response.next_page_token != page_token
@@ -114,8 +116,8 @@ SQL
     begin
       response = @service.list_calendar_lists(page_token: page_token)
       response.items.each do |e|
-        print "CALENDAR NAME: " + e.summary + "\n"
-        print "CALENDAR ID  : " + e.id + "\n"
+        print "CALENDAR NAME   : " + e.summary + "\n"
+        print "CALENDAR ID     : " + e.id + "\n"
         print "\n"
       end
       if response.next_page_token != page_token
@@ -139,12 +141,58 @@ SQL
       color_id: "1",
       status: "tentative",
       extended_properties: Google::Apis::CalendarV3::Event::ExtendedProperties.new(
-        private: {
+        shared: {
           recurrence_name: title
         }
       )
     )
     result = @service.insert_event(calendar_id, event)
     puts "Event created: #{result.html_link}"
+  end
+
+  def update_calendar(calendar_id)
+    db = SQLite3::Database.new 'db/events.db'
+    sql = <<-SQL
+create table if not exists event (
+id text primary key,
+summary text,
+recurrence_id integar,
+start_time text,
+end_time text
+);
+SQL
+    db.execute(sql)
+    page_token = nil
+    begin
+      result = @service.list_events(calendar_id,
+                                    page_token: page_token,
+                                    order_by: "starttime",
+                                    single_events: true)
+      result.items.each do |e|
+        if e.extended_properties.nil?
+          next
+        end
+        if !db.execute("select * from event where id = '#{e.id}' and recurrence_id is not null").empty?
+          db.execute("select recurrence_id from event where id = '#{e.id}'") do |recurrence_id|
+            db.execute("select name from recurrence where id = '#{recurrence_id[0]}'") do |recurrence_name|
+              patch = Google::Apis::CalendarV3::Event.new(
+                extended_properties: Google::Apis::CalendarV3::Event::ExtendedProperties.new(
+                shared: {
+                  recurrence_name: recurrence_name[0]
+                }
+              )
+              )
+              response = @service.patch_event(calendar_id, e.id, patch)
+              puts response.html_link
+            end
+          end
+        end
+      end
+      if result.next_page_token != page_token
+        page_token = result.next_page_token
+      else
+        page_token = nil
+      end
+    end while !page_token.nil?
   end
 end

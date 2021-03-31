@@ -61,6 +61,10 @@ when "post_heron" then
   else
     puts "カレンダID，予定名，heronの予測結果ファイルを指定してください"
   end
+
+when "update_calendar" then
+  calendar_id = ARGV[1]
+  calmana.update_calendar(calendar_id)
   
 else
   puts("定義されていないコマンドです")
